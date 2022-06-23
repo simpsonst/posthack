@@ -9,7 +9,7 @@ myspace:=$(myblank) $(myblank)
 MYCURDIR:=$(subst $(myspace),\$(myspace),$(CURDIR)/)
 MYABSPATH=$(foreach f,$1,$(if $(patsubst /%,,$f),$(MYCURDIR)$f,$f))
 
--include gridmon-env.mk
+-include posthack-env.mk
 -include $(call MYABSPATH,config.mk)
 
 scripts += decode-header
