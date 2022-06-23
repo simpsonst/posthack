@@ -25,4 +25,4 @@ SHAREDIR ?= $(PREFIX)/share/posthack
 LIBEXECDIR ?= $(PREFIX)/libexec/posthack
 include binodeps.mk
 
-install:: install-hidden-scripts
+install:: install-scripts
