@@ -156,7 +156,7 @@ Make sure the file is readable only by you:
 chmod 600 ~/.config/posthack/secrets.yml
 ```
 
-`pushimap` reads from `~/.config/posthack/pushimap.yml` by default, but this is overridden by setting the environment variable `PUSHIAMP_CONFIG`, which is in turn overridden by the switch `-f somefile.yml`.
+`pushimap` reads from `~/.config/posthack/pushimap.yml` by default, but this is overridden by setting the environment variable `PUSHIMAP_CONFIG`, which is in turn overridden by the switch `-f somefile.yml`.
 It then selects the account whose name is `default` by default, similarly overridden in turn by the field `default-account`, the environment variable `PUSHIMAP_ACCOUNT`, and the switch `-a otheraccount`.
 Set `PUSHIMAP_ACCOUNT` and/or `PUSHIMAP_CONFIG` at the start of `.procmailrc`, if you don't want to use the defaults:
 
