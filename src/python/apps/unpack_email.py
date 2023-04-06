@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ## Copyright (c) 2022, Lancaster University
 ## All rights reserved.
 ##
@@ -32,5 +30,21 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 ## OF THE POSSIBILITY OF SUCH DAMAGE.
 
-export PYTHONPATH="${0%/*}/python3/apps.zip"
-exec python3 -m remove_safelinks "$@"
+"""Unpack a MIME message onto STDOUT."""
+
+import sys
+import email
+
+def main():
+    msg = email.message_from_file(sys.stdin)
+    if not(msg.is_multipart()):
+        sys.stderr.write('Not multipart\n')
+        sys.exit(1)
+        pass
+    attachment = msg.get_payload(1)
+    sys.stdout.buffer.write(attachment.get_payload(0).as_bytes(unixfrom=True))
+    return
+
+if __name__ == '__main__':
+    main()
+

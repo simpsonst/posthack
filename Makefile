@@ -1,5 +1,6 @@
 all::
 
+FIND=find
 PREFIX=/usr/local
 
 ## Provide a version of $(abspath) that can cope with spaces in the
@@ -23,6 +24,15 @@ BINODEPS_SHAREDIR=src/share
 BINODEPS_SCRIPTDIR=$(BINODEPS_SHAREDIR)
 SHAREDIR ?= $(PREFIX)/share/posthack
 LIBEXECDIR ?= $(PREFIX)/libexec/posthack
-include binodeps.mk
 
+python3_zips += apps
+
+include binodeps.mk
+include pynodeps.mk
+
+all:: python-zips
+install:: install-python-zips
 install:: install-scripts
+
+tidy::
+	$(FIND) . -name "*~" -delete

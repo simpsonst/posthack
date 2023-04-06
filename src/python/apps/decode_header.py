@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ## Copyright (c) 2022, Lancaster University
 ## All rights reserved.
 ##
@@ -32,5 +30,10 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 ## OF THE POSSIBILITY OF SUCH DAMAGE.
 
-export PYTHONPATH="${0%/*}/python3/apps.zip"
-exec python3 -m remove_safelinks "$@"
+import sys
+from email.header import decode_header
+
+dh = decode_header(sys.stdin.read())
+default_charset = 'US-ASCII'
+res = ''.join([ str(t[0], t[1] or default_charset) for t in dh ])
+print(res)

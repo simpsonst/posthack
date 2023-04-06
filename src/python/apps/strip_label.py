@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ## Copyright (c) 2022, Lancaster University
 ## All rights reserved.
 ##
@@ -32,5 +30,34 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 ## OF THE POSSIBILITY OF SUCH DAMAGE.
 
-export PYTHONPATH="${0%/*}/python3/apps.zip"
-exec python3 -m remove_safelinks "$@"
+import sys
+import email
+import re
+from email.header import decode_header
+
+if __name__ == '__main__':
+    msg = email.message_from_file(sys.stdin)
+    default_charset = 'ASCII'
+    oldsubj = ''.join([ txt.decode(enc or default_charset)
+                        if isinstance(txt, bytes) else txt
+                        for txt, enc in decode_header(msg['Subject']) ])
+    msg['X-Old-Subject'] = msg['Subject']
+
+    subj = oldsubj
+    for word in sys.argv[1:]:
+        ptn = re.compile(r'(^|\s+)(' + re.escape(word) + r')(?:\s*|$)')
+        last = 0
+        subj = ''
+        for m in re.finditer(ptn, oldsubj):
+            subj += oldsubj[last:m.start()]
+            subj += m.group(1)
+            last = m.end()
+            continue
+        subj += oldsubj[last:]
+        oldsubj = subj
+        continue
+
+    del msg['Subject']
+    msg['Subject'] = subj
+    sys.stdout.buffer.write(msg.as_bytes(unixfrom=True))
+    pass
