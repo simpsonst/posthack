@@ -15,7 +15,7 @@ MYABSPATH=$(foreach f,$1,$(if $(patsubst /%,,$f),$(MYCURDIR)$f,$f))
 
 scripts += decode-header
 scripts += pushimap
-scripts += purge-imap
+hidden_scripts += purge-imap
 scripts += remove-external-sender
 scripts += remove-safelinks
 scripts += strip-label
@@ -34,6 +34,7 @@ include pynodeps.mk
 all:: python-zips
 install:: install-python-zips
 install:: install-scripts
+install:: install-hidden-scripts
 
 tidy::
 	$(FIND) . -name "*~" -delete
