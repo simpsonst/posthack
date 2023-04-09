@@ -32,5 +32,5 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 ## OF THE POSSIBILITY OF SUCH DAMAGE.
 
-export PYTHONPATH="${0%/*}/python3/apps.zip"
+export PYTHONPATH="${0%/*/*}/share/posthack/python3/apps.zip"
 exec python3 -m decode_header "$@"
