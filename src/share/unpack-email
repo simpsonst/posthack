@@ -33,5 +33,4 @@
 ## OF THE POSSIBILITY OF SUCH DAMAGE.
 
 export PYTHONPATH="${0%/*/*}/share/posthack/python3/apps.zip"
-ls "$PYTHONPATH"
 exec python3 -m unpack_email "$@"
