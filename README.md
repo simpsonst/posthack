@@ -217,6 +217,23 @@ DEFAULT = /var/mail/fred.dirs/
 | pushimap -d "INBOX"
 ```
 
+### Tagging external messages
+
+A `pushimap` account configuration can contain a `tags` entry:
+
+```
+accounts:
+  - name: default
+    hostname: imap.example.com
+    username: fred
+    tags:
+      - env: EXTERNAL_MAIL
+        name: External
+```
+
+With this configuration, if `EXTERNAL_MAIL` is non-empty, the tag `External` will be added to the message as it is delivered.
+(Recall that `EXTERNAL_MAIL` is set by one of the `.procmailrc` configuration examples earlier.)
+Your email user agent should be able to highlight such messages.
 
 ## IMAP purging
 

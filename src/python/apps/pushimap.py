@@ -70,7 +70,7 @@ if __name__ == '__main__':
                   else None
     msg_file = None
     mb_name = 'INBOX'
-    flags = ''
+    flags = []
     action = "push"
     dry_run = False
     opts, args = getopt.getopt(sys.argv[1:], "f:a:d:sFlPn")
@@ -82,9 +82,9 @@ if __name__ == '__main__':
         elif opt == '-a':
             acc_name = val
         elif opt == '-s':
-            flags += ' \Seen'
+            flags.append('\Seen')
         elif opt == '-F':
-            flags += ' \Flagged'
+            flags.append('\Flagged')
         elif opt == '-l':
             action = "list"
         elif opt == '-P':
@@ -93,7 +93,6 @@ if __name__ == '__main__':
             dry_run = True
             pass
         continue
-    flags = flags[1:]
     if len(args) == 0:
         args.append('/dev/stdin')
         pass
@@ -119,6 +118,7 @@ if __name__ == '__main__':
         opt_copy('port', entry, acc, xform=lambda x: int(x))
         opt_copy('password', entry, passwords, src_key=acc['name'])
         opt_copy('purge', entry, acc)
+        opt_copy('tags', entry, acc)
         continue
     acc = accounts[acc_name]
 
@@ -291,6 +291,23 @@ if __name__ == '__main__':
                 pass
             pass
         else:
+            ## Add configured flags.
+            for tconf in acc.get('tags', []):
+                ## Skip entries that don't define a tag.
+                tnam = tconf.get('name', None)
+                if tnam is None:
+                    continue
+
+                ## Skip entries that require a non-empty environment
+                ## variable.
+                tenv = tconf.get('env', None)
+                if tenv is not None and len(os.environ.get(tenv, '')) == 0:
+                    continue
+
+                ## Add this tag.
+                flags.append(tnam)
+                continue
+
             ## Process the plain arguments as filenames.
             for fn in args:
                 if fn is None or fn == '':
@@ -306,7 +323,7 @@ if __name__ == '__main__':
                 created = False
                 while True:
                     idate = imaplib.Time2Internaldate(time.time())
-                    typ, erk = c.append(mb_name, flags, idate,
+                    typ, erk = c.append(mb_name, ' '.join(flags), idate,
                                         msg.as_bytes(unixfrom=True))
                     if typ != 'NO':
                         sys.exit()
