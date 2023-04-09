@@ -32,6 +32,7 @@
 
 import yaml
 import os
+import imaplib
 
 def _opt_copy(dst_key, dst, src, src_key=None, xform=None):
     if dst_key in dst:
@@ -98,5 +99,21 @@ class PosthackConfiguration:
 
         self.blocks = config.get('blocks', [ ])
         pass
+
+    def get_account(self, name=None):
+        if name is None:
+            name = self.account_name
+            pass
+        return self.accounts.get(name)
+
+    def open_account(self, name=None):
+        acc = self.get_account(name)
+        hostname = acc['hostname']
+        port = acc.get('port', 993)
+        conn = imaplib.IMAP4_SSL(hostname, port)
+        username = acc['username']
+        password = acc['password']
+        conn.login(username, password)
+        return (acc, conn)
 
     pass
