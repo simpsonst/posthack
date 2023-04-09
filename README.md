@@ -231,7 +231,7 @@ accounts:
         name: External
 ```
 
-With this configuration, if `EXTERNAL_MAIL` is non-empty, the tag `External` will be added to the message as it is delivered.
+With this configuration, if the environment variable `EXTERNAL_MAIL` is non-empty, the tag `External` will be added to the message as it is delivered.
 (Recall that `EXTERNAL_MAIL` is set by one of the `.procmailrc` configuration examples earlier.)
 Your email user agent should be able to highlight such messages.
 
