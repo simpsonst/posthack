@@ -97,7 +97,6 @@ class PosthackConfiguration:
             continue
 
         self.blocks = config.get('blocks', [ ])
-
         pass
 
     pass
