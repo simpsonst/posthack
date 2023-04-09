@@ -71,6 +71,20 @@ Of course, it then needed unpacking at the other end, for which I used the follo
 | unpack-email
 ```
 
+Arguments allow you to walk a multipart message hierarchy:
+
+- `-s *num*` &ndash; Skip `num` parts of the current message.
+
+- `-t *type*` &ndash; Skip parts not of content type `type`.
+
+- `-d *disp*` &ndash; Skip parts not of content disposition `disp`.
+
+- `-n *name*` &ndash; Skip parts without a content disposition name `name`.
+
+- `--` &ndash; Select the first part matching the above criteria, and make it the current message.
+  `-s`, `-t`, `-d` and `-n` are then reset, so new criteria can be specified for selecting within the new current message.
+
+If no arguments are supplied, `-s 1` is assumed (for backward compatibility).
 
 ## Restoring 'safe' links
 
