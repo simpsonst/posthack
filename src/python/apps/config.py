@@ -65,13 +65,6 @@ class PosthackConfiguration:
                 self._cfg_filename = os.path.expanduser(self.DEFAULT_CONFIG)
                 pass
             pass
-            
-        if account_name is not None:
-            self.account_name = account_name
-            pass
-        else:
-            self.account_name = os.environ.get(self.ACCOUNT_ENV, 'default')
-            pass
 
         ## Load the configuration.
         with open(os.path.expanduser(self._cfg_filename), "r") as stream:
@@ -79,9 +72,9 @@ class PosthackConfiguration:
             pass
 
         ## Determine the default account.
-        if self.account_name is None:
-            self.account_name = config.get('default-account', 'default')
-            pass
+        self.account_name = account_name or \
+            os.environ.get(self.ACCOUNT_ENV,
+                           config.get('default-account', 'default'))
 
         ## Load in secrets.
         pwf_name = config.get('secrets', self.DEFAULT_SECRETS)
