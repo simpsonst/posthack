@@ -143,7 +143,7 @@ Each element of `blocks` is split into lines, and matched against exact lines in
 If you keep your emails on a remote IMAP server, the provider might provide some filtering rules.
 You might prefer `procmail`, but have no way to run it on the server.
 You could fetch new mail off that server, and process it on a dedicated server at home, or on a VPS, but `procmail` won't be able to deliver back to specific folders on the server, as it can only natively deliver to local mbox or maildirs folders.
-`pushimap` can be used in a `procmail` rule to deliver the message to a specific folder on an IMAP server.
+`push-imap` can be used in a `procmail` rule to deliver the message to a specific folder on an IMAP server.
 
 *Caution!  Misconfiguration could result in lost emails!*
 
@@ -170,7 +170,7 @@ Make sure the file is readable only by you:
 chmod 600 ~/.config/posthack/secrets.yml
 ```
 
-`pushimap` reads from `~/.config/posthack/config.yml` by default, but this is overridden by setting the environment variable `PUSHIMAP_CONFIG`, which is in turn overridden by the switch `-f somefile.yml`.
+`push-imap` reads from `~/.config/posthack/config.yml` by default, but this is overridden by setting the environment variable `PUSHIMAP_CONFIG`, which is in turn overridden by the switch `-f somefile.yml`.
 It then selects the account whose name is `default` by default, similarly overridden in turn by the field `default-account`, the environment variable `PUSHIMAP_ACCOUNT`, and the switch `-a otheraccount`.
 Set `PUSHIMAP_ACCOUNT` and/or `PUSHIMAP_CONFIG` at the start of `.procmailrc`, if you don't want to use the defaults:
 
@@ -180,19 +180,19 @@ PUSHIMAP_ACCOUNT = bt
 ```
 
 Some servers use dots as separators for nested folders, and some use slashes.
-You can first use `pushimap -l` to list folders in the account, showing what is used in each case.
+You can first use `push-imap -l` to list folders in the account, showing what is used in each case.
 It will also show how certain other special characters are escaped.
 
-Now you can add terminating `procmail` rules that use `pushimap` to deliver to specific folders, using the strings that `pushimap -l` specifies.
+Now you can add terminating `procmail` rules that use `push-imap` to deliver to specific folders, using the strings that `push-imap -l` specifies.
 For example, this one delivers Twitter notifications to `Alerts/News`:
 
 ```
 :0 W
 * ^From:.*info@(e\.)?twitter\.com
-| pushimap -s -d "Alerts/News"
+| push-imap -s -d "Alerts/News"
 ```
 
-`-d` specifies the folder, escaped as shown by `pushimap -l`.
+`-d` specifies the folder, escaped as shown by `push-imap -l`.
 `-s` marks the message as 'seen' or 'read'.
 You can also use `-F` to mark the message as flagged or starred.
 
@@ -214,12 +214,12 @@ DEFAULT = /var/mail/fred.dirs/
 
 ## At the end
 :0 W
-| pushimap -d "INBOX"
+| push-imap -d "INBOX"
 ```
 
 ### Tagging external messages
 
-A `pushimap` account configuration can contain a `tags` entry:
+A `push-imap` account configuration can contain a `tags` entry:
 
 ```
 accounts:
@@ -264,7 +264,7 @@ accounts:
         message-limit: 100
 ```
 
-Use `pushimap -l` as before to get the escaped names of the folders in question.
+Use `push-imap -l` as before to get the escaped names of the folders in question.
 Quote them correctly for YAML, if necessary.
 
 When ready, set up an infrequent cronjob to purge the old messages:
