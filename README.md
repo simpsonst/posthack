@@ -147,7 +147,7 @@ You could fetch new mail off that server, and process it on a dedicated server a
 
 *Caution!  Misconfiguration could result in lost emails!*
 
-Create a file (say, `~/.config/posthack/pushimap.yml`) to hold account details:
+Create a file (say, `~/.config/posthack/config.yml`) to hold account details:
 
 ```
 secrets: ~/.config/posthack/secrets.yml
@@ -170,7 +170,7 @@ Make sure the file is readable only by you:
 chmod 600 ~/.config/posthack/secrets.yml
 ```
 
-`pushimap` reads from `~/.config/posthack/pushimap.yml` by default, but this is overridden by setting the environment variable `PUSHIMAP_CONFIG`, which is in turn overridden by the switch `-f somefile.yml`.
+`pushimap` reads from `~/.config/posthack/config.yml` by default, but this is overridden by setting the environment variable `PUSHIMAP_CONFIG`, which is in turn overridden by the switch `-f somefile.yml`.
 It then selects the account whose name is `default` by default, similarly overridden in turn by the field `default-account`, the environment variable `PUSHIMAP_ACCOUNT`, and the switch `-a otheraccount`.
 Set `PUSHIMAP_ACCOUNT` and/or `PUSHIMAP_CONFIG` at the start of `.procmailrc`, if you don't want to use the defaults:
 
@@ -242,11 +242,11 @@ For example, it could retain only messages less than 90 days old in `Alerts/News
 
 That's great, but it depends on having the user agent running, and if you use more than one (e.g., one at home, one at work), you either have to maintain two sets of policies, or keep one running at the place you're not.
 
-`pushimap` can also be used to apply retention policies to a remote IMAP server.
+`purge-imap` can be used to apply retention policies to a remote IMAP server.
 
 *Caution!  Misconfiguration could result in losing the wrong emails!*
 
-Add a `purge` entry to your account in `~/.config/posthack/pushimap.yml`:
+Add a `purge` entry to your account in `~/.config/posthack/config.yml`:
 
 ```
 accounts:
@@ -270,9 +270,9 @@ Quote them correctly for YAML, if necessary.
 When ready, set up an infrequent cronjob to purge the old messages:
 
 ```
-PUSHIMAP_CONFIG=/home/fred/.config/posthack/pushimap.yml
+PUSHIMAP_CONFIG=/home/fred/.config/posthack/config.yml
 
-45 4 * * 3 pushimap -P > "$HOME/.local/var/log/purge-bt.log" 2>&1
+45 4 * * 3 purge-imap > "$HOME/.local/var/log/purge-bt.log" 2>&1
 ```
 
 
