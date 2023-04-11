@@ -102,20 +102,20 @@ if __name__ == '__main__':
             created = False
             while True:
                 idate = imaplib.Time2Internaldate(time.time())
-                typ, erk = c.append(mb_name, ' '.join(flags), idate,
-                                    msg.as_bytes(unixfrom=True))
+                typ, erk = conn.append(mb_name, ' '.join(flags), idate,
+                                       msg.as_bytes(unixfrom=True))
                 if typ != 'NO':
                     sys.exit()
                     pass
                 if created:
                     sys.exit(1)
                     pass
-                typ, erk = c.create(mb_name)
+                typ, erk = conn.create(mb_name)
                 created = True
                 continue
             continue
         pass
     finally:
-        c.logout()
+        conn.logout()
         pass
     pass
