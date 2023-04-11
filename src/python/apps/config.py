@@ -32,7 +32,9 @@
 
 import yaml
 import os
+import sys
 import imaplib
+import glob
 
 def _opt_copy(dst_key, dst, src, src_key=None, xform=None):
     if dst_key in dst:
@@ -97,7 +99,7 @@ class PosthackConfiguration:
             _opt_copy('tags', entry, acc)
             continue
 
-        self.blocks = config.get('blocks', [ ])
+        self.blocks = config.get('blocks', { })
         pass
 
     def get_account(self, name=None):
@@ -116,4 +118,26 @@ class PosthackConfiguration:
         conn.login(username, password)
         return (acc, conn)
 
+    def get_blocks(self, name=None):
+        if name is None:
+            name = self.account_name
+            pass
+
+        res = list()
+        for fnpat in self.blocks.get(name, [ ]):
+            for fn in sorted(glob.glob(os.path.expanduser(fnpat))):
+                with open(fn, "r") as fp:
+                    lines = fp.read().splitlines()
+                    res.append(lines)
+                    pass
+                continue
+            continue
+        return res
+
+    pass
+
+if __name__ == '__main__':
+    cfg = PosthackConfiguration()
+    from pprint import pprint
+    pprint(cfg.get_blocks(sys.argv[1]))
     pass

@@ -41,60 +41,73 @@ import yaml
 from getopt import getopt
 from pprint import pprint
 
+import config
+
 def strip_lines(lines, blocks):
-    for i in range(0, len(lines)):
+    lim = int((len(lines) + 1) / 2)
+    for i in range(0, lim):
         for cand in blocks:
             if i + len(cand) > len(lines):
                 continue
             okay = True
-            for j in range(0, len(cand)):
-                if cand[j] != lines[i + j]:
+            clen = len(cand)
+            for j in range(0, clen):
+                if cand[j] != lines[(i + j) * 2]:
                     okay = False
                     break
                 continue
             if not okay:
                 continue
-            del lines[i:i + len(cand)]
+            del lines[2 * i: 2 * (i + clen)]
             return True
         continue
     return False
 
 if __name__ == '__main__':
     cfg_file = None
-    opts, args = getopt(sys.argv[1:], "f:")
+    acc_name = None
+    opts, args = getopt(sys.argv[1:], "f:a:")
     for opt, val in opts:
         if opt == '-f':
             cfg_file = val
+        elif opt == '-a':
+            acc_name = val
             pass
         continue
-    if cfg_file is None:
-        sys.stderr.write('Specify -f conf.yml\n')
-        sys.exit(1)
-        pass
-    with open(os.path.expanduser(cfg_file), "r") as fp:
-        config = yaml.safe_load(fp)
-        pass
-    blocks = []
-    for text in config['blocks']:
-        lines = text.splitlines()
-        blocks.append(lines)
-        continue
+    conf = config.PosthackConfiguration(cfg_file, acc_name)
+    blocks = conf.get_blocks()
+
+    crlf = re.compile(r'(\r?\n)')
 
     ## Process the message.
     msg = email.message_from_file(sys.stdin)
     for part in msg.walk():
+        ## TODO: Handle text/calendar too.
         if part.get_content_type() == 'text/plain' or \
            part.get_content_type() == 'text/html':
-            # cs = part.get_content_charset('us-ascii')
+            ## Get the content as a string.
+            cs = part.get_content_charset('us-ascii')
             tenc = part.get('Content-Transfer-Encoding')
             text = part.get_payload(decode=True)
-            # if cs is not None:
-            #     text = text.decode(cs)
-            lines = text.splitlines()
-            strip_lines(lines, config['blocks'])
-            text = '\n'.join(lines) + '\n'
-            # if cs is not None:
-            #     text = text.encode(cs)
+            text = text.decode(cs)
+
+            ## Split the content by lines, preserving the line
+            ## terminators.  'lines' alternately contains a line
+            ## followed by its terminator.  An odd number of entries
+            ## indicates that the last line wasn't terminated.
+            lines = crlf.split(text)
+
+            ## Remove sequences of lines matching those loaded from
+            ## configuration.  The following terminators are also
+            ## deleted.
+            strip_lines(lines, blocks)
+
+            ## Join all the remaining lines and their terminators back
+            ## up again.
+            text = ''.join(lines)
+
+            ## Re-encode the text to its byte form.
+            text = text.encode(cs)
             if tenc == 'base64':
                 text = base64.b64encode(text)
             elif tenc == 'quoted-printable':
