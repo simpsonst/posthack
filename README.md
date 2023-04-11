@@ -236,10 +236,10 @@ POSTHACK_ACCOUNT = bt
 ```
 
 Some servers use dots as separators for nested folders, and some use slashes.
-You can first use `push-imap -l` to list folders in the account, showing what is used in each case.
+You can first use `list-imap` to list folders in the account, showing what is used in each case.
 It will also show how certain other special characters are escaped.
 
-Now you can add terminating `procmail` rules that use `push-imap` to deliver to specific folders, using the strings that `push-imap -l` specifies.
+Now you can add terminating `procmail` rules that use `push-imap` to deliver to specific folders, using the strings that `list-imap` specifies.
 For example, this one delivers Twitter notifications to `Alerts/News`:
 
 ```
@@ -248,7 +248,7 @@ For example, this one delivers Twitter notifications to `Alerts/News`:
 | push-imap -s -d "Alerts/News"
 ```
 
-`-d` specifies the folder, escaped as shown by `push-imap -l`.
+`-d` specifies the folder, escaped as shown by `list-imap`.
 `-s` marks the message as 'seen' or 'read'.
 You can also use `-F` to mark the message as flagged or starred.
 
@@ -323,7 +323,7 @@ accounts:
         message-limit: 100
 ```
 
-Use `push-imap -l` as before to get the escaped names of the folders in question.
+Use `list-imap` as before to get the escaped names of the folders in question.
 Quote them correctly for YAML, if necessary.
 
 When ready, set up an infrequent cronjob to purge the old messages:

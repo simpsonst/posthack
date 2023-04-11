@@ -15,6 +15,7 @@ MYABSPATH=$(foreach f,$1,$(if $(patsubst /%,,$f),$(MYCURDIR)$f,$f))
 
 scripts += decode-header
 scripts += push-imap
+scripts += list-imap
 hidden_scripts += purge-imap
 scripts += remove-external-sender
 scripts += remove-safelinks
