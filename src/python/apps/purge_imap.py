@@ -57,156 +57,160 @@ if __name__ == '__main__':
     ## Get account details and open the connection.
     acc, conn = config.open_account()
 
-    ## Identify the trash folder,
-    imap_list_fmt = \
-        re.compile(r'\((?P<flags>.*?)\) "(?P<delimiter>.*)" (?P<name>.*)')
-    typ, dat = conn.list()
-    trash = None
-    for item in dat:
-        fstxt, dlim, mbox = imap_list_fmt.match(item.decode('US-ASCII')).groups()
-        fs = fstxt.split()
-        if '\Trash' in fs:
-            trash = mbox.strip('"')
-            break
-        pass
-    else:
-        sys.stderr.write('no trash folder\n')
-        sys.exit(1)
-        pass
-
-    ## Go through each 'purge' section, and apply deletions.
-    for sect in acc.get('purge', [ ]):
-        folder = sect.get("folder")
-        if folder is None:
-            continue
-        sys.stderr.write('Folder %s\n' % folder)
-        flags_txt = sect.get('flags')
-        flags = set() if flags_txt is None \
-            else set(flags_text.split())
-        (typ, cnt) = conn.select(mailbox='"' + folder + '"')
-        if typ != "OK":
-            sys.stderr.write('  Skipped - %s\n' % cnt[0])
-            continue
-
-        ## Apply a maximum age in days, if specified.
-        max_age_txt = sect.get("max-age")
-        if max_age_txt is not None:
-            max_age = int(max_age_txt)
-            if max_age < 1:
-                sys.stderr.write('  Skipped - non-positive age\n')
-                continue
-
-            ## Identify old messages.
-            cut_off = datetime.datetime.now()
-            cut_off -= datetime.timedelta(days=max_age)
-            cut_off = cut_off.strftime("%d-%b-%Y")
-            sys.stderr.write('  Deleting older than %s\n' % cut_off)
-            crit = 'BEFORE "%s"' % cut_off
-            if 'unread' not in flags:
-                crit = 'SEEN ' + crit
-                pass
-            #crit = 'UNDELETED ' + crit
-            if 'starred' not in flags:
-                crit = 'UNFLAGGED ' + crit
-                pass
-            crit = '(%s)' % crit
-            typ, mnums = conn.search(None, crit)
-            if typ != 'OK':
-                sys.stderr.write('    Search error: %s\n' % mnums)
-                continue
-            mnums = mnums[0].decode('US-ASCII')
-            if mnums == '':
-                sys.stderr.write('    No matches\n')
-                continue
-
-            ## The message numbers are space-separated,
-            ## but we need them comma-separated to feed
-            ## them back to the server.
-            mnums = mnums.split(' ')
-            numlen = len(mnums)
-            mnums = ','.join(mnums)
-
-            ## Copy the selected messages to trash, mark
-            ## the originals as deleted, and expunge.
-            # print('into %s: %s' % (trash, mnums))
-            if not dry_run:
-                typ, rsp = conn.copy(mnums, trash)
-                if typ != 'OK':
-                    sys.stderr.write('    Copy error: %s\n' % rsp)
-                    continue
-                # pprint(rsp)
-                rsp = conn.store(mnums, '+FLAGS', '\Deleted')
-                # pprint(rsp)
-                rsp = conn.expunge()
-                # pprint(rsp)
-                pass
-            sys.stderr.write('    Moved %d to trash\n' % numlen)
+    try:
+        ## Identify the trash folder,
+        imap_list_fmt = \
+            re.compile(r'\((?P<flags>.*?)\) "(?P<delimiter>.*)" (?P<name>.*)')
+        typ, dat = conn.list()
+        trash = None
+        for item in dat:
+            fstxt, dlim, mbox = \
+                imap_list_fmt.match(item.decode('US-ASCII')).groups()
+            fs = fstxt.split()
+            if '\Trash' in fs:
+                trash = mbox.strip('"')
+                break
+            pass
+        else:
+            sys.stderr.write('no trash folder\n')
+            sys.exit(1)
             pass
 
-        ## Apply a maximum number of the most recent
-        ## messages, if specified.
-        msg_lim_txt = sect.get("message-limit")
-        if msg_lim_txt is not None:
-            msg_lim = int(msg_lim_txt)
-            if msg_lim < 1:
-                sys.stderr.write('  Skipped - non-positive message limit\n')
+        ## Go through each 'purge' section, and apply deletions.
+        for sect in acc.get('purge', [ ]):
+            folder = sect.get("folder")
+            if folder is None:
+                continue
+            sys.stderr.write('Folder %s\n' % folder)
+            flags_txt = sect.get('flags')
+            flags = set() if flags_txt is None \
+                else set(flags_text.split())
+            (typ, cnt) = conn.select(mailbox='"' + folder + '"')
+            if typ != "OK":
+                sys.stderr.write('  Skipped - %s\n' % cnt[0])
                 continue
 
-            ## Get all messages.  The most recent are at
-            ## the end.
-            sys.stderr.write('  Retaining newest %d\n' % msg_lim)
-            #typ, mnums = conn.search(None, 'ALL')
-            crit = ''
-            if 'unread' not in flags:
-                crit += ' SEEN'
-                pass
-            if 'starred' not in flags:
-                crit += ' UNFLAGGED'
-                pass
-            if crit == '':
-                crit = 'ALL'
-            else:
-                crit = crit[1:]
-                pass
-            typ, mnums = conn.sort('DATE', 'UTF-8', '(%s)' % crit)
-            if typ != 'OK':
-                sys.stderr.write('    Search error: %s\n' % mnums)
-                continue
-            mnums = mnums[0].decode('US-ASCII')
-            if mnums == '':
-                sys.stderr.write('    No matches\n')
-                continue
-
-            ## The message numbers are space-separated,
-            ## but we need them comma-separated to feed
-            ## them back to the server.
-            mnums = mnums.split(' ')
-            del mnums[-msg_lim:]
-            numlen = len(mnums)
-            if numlen < 1:
-                sys.stderr.write('    Too few\n')
-                continue
-            mnums = ','.join(mnums)
-            sys.stderr.write('    Will delete %s\n' % mnums)
-
-            ## Copy the selected messages to trash, mark
-            ## the originals as deleted, and expunge.
-            # print('into %s: %s' % (trash, mnums))
-            if not dry_run:
-                typ, rsp = conn.copy(mnums, trash)
-                if typ != 'OK':
-                    sys.stderr.write('    Copy error: %s\n' % rsp)
+            ## Apply a maximum age in days, if specified.
+            max_age_txt = sect.get("max-age")
+            if max_age_txt is not None:
+                max_age = int(max_age_txt)
+                if max_age < 1:
+                    sys.stderr.write('  Skipped - non-positive age\n')
                     continue
-                # pprint(rsp)
-                rsp = conn.store(mnums, '+FLAGS', '\Deleted')
-                # pprint(rsp)
-                rsp = conn.expunge()
-                # pprint(rsp)
+
+                ## Identify old messages.
+                cut_off = datetime.datetime.now()
+                cut_off -= datetime.timedelta(days=max_age)
+                cut_off = cut_off.strftime("%d-%b-%Y")
+                sys.stderr.write('  Deleting older than %s\n' % cut_off)
+                crit = 'BEFORE "%s"' % cut_off
+                if 'unread' not in flags:
+                    crit = 'SEEN ' + crit
+                    pass
+                #crit = 'UNDELETED ' + crit
+                if 'starred' not in flags:
+                    crit = 'UNFLAGGED ' + crit
+                    pass
+                crit = '(%s)' % crit
+                typ, mnums = conn.search(None, crit)
+                if typ != 'OK':
+                    sys.stderr.write('    Search error: %s\n' % mnums)
+                    continue
+                mnums = mnums[0].decode('US-ASCII')
+                if mnums == '':
+                    sys.stderr.write('    No matches\n')
+                    continue
+
+                ## The message numbers are space-separated, but we
+                ## need them comma-separated to feed them back to the
+                ## server.
+                mnums = mnums.split(' ')
+                numlen = len(mnums)
+                mnums = ','.join(mnums)
+
+                ## Copy the selected messages to trash, mark the
+                ## originals as deleted, and expunge.
+                # print('into %s: %s' % (trash, mnums))
+                if not dry_run:
+                    typ, rsp = conn.copy(mnums, trash)
+                    if typ != 'OK':
+                        sys.stderr.write('    Copy error: %s\n' % rsp)
+                        continue
+                    # pprint(rsp)
+                    rsp = conn.store(mnums, '+FLAGS', '\Deleted')
+                    # pprint(rsp)
+                    rsp = conn.expunge()
+                    # pprint(rsp)
+                    pass
+                sys.stderr.write('    Moved %d to trash\n' % numlen)
                 pass
-            sys.stderr.write('    Moved %d to trash\n' % numlen)
-            pass
+
+            ## Apply a maximum number of the most recent messages, if
+            ## specified.
+            msg_lim_txt = sect.get("message-limit")
+            if msg_lim_txt is not None:
+                msg_lim = int(msg_lim_txt)
+                if msg_lim < 1:
+                    sys.stderr.write('  Skipped - non-positive message limit\n')
+                    continue
+
+                ## Get all messages.  The most recent are at the end.
+                sys.stderr.write('  Retaining newest %d\n' % msg_lim)
+                #typ, mnums = conn.search(None, 'ALL')
+                crit = ''
+                if 'unread' not in flags:
+                    crit += ' SEEN'
+                    pass
+                if 'starred' not in flags:
+                    crit += ' UNFLAGGED'
+                    pass
+                if crit == '':
+                    crit = 'ALL'
+                else:
+                    crit = crit[1:]
+                    pass
+                typ, mnums = conn.sort('DATE', 'UTF-8', '(%s)' % crit)
+                if typ != 'OK':
+                    sys.stderr.write('    Search error: %s\n' % mnums)
+                    continue
+                mnums = mnums[0].decode('US-ASCII')
+                if mnums == '':
+                    sys.stderr.write('    No matches\n')
+                    continue
+
+                ## The message numbers are space-separated, but we
+                ## need them comma-separated to feed them back to the
+                ## server.
+                mnums = mnums.split(' ')
+                del mnums[-msg_lim:]
+                numlen = len(mnums)
+                if numlen < 1:
+                    sys.stderr.write('    Too few\n')
+                    continue
+                mnums = ','.join(mnums)
+                sys.stderr.write('    Will delete %s\n' % mnums)
+
+                ## Copy the selected messages to trash, mark the
+                ## originals as deleted, and expunge.
+                # print('into %s: %s' % (trash, mnums))
+                if not dry_run:
+                    typ, rsp = conn.copy(mnums, trash)
+                    if typ != 'OK':
+                        sys.stderr.write('    Copy error: %s\n' % rsp)
+                        continue
+                    # pprint(rsp)
+                    rsp = conn.store(mnums, '+FLAGS', '\Deleted')
+                    # pprint(rsp)
+                    rsp = conn.expunge()
+                    # pprint(rsp)
+                    pass
+                sys.stderr.write('    Moved %d to trash\n' % numlen)
+                pass
         
-        conn.select()
-        continue
-
+            conn.select()
+            continue
+        pass
+    finally:
+        conn.logout()
+        pass
     pass
