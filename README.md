@@ -17,6 +17,80 @@ These Python scripts are intended for use mostly in `procmail` rules, and provid
 - Purge old messages from IMAP servers.
 
 
+# Installation
+
+Installation requires [Binodeps](https://github.com/simpsonst/binodeps).
+
+To install to the default location `/usr/local`:
+
+```
+make
+sudo make install
+```
+
+You might prefer to create a `config.mk` adjacent to `Makefile`, to install in another location:
+
+```
+## In config.mk
+PREFIX=$(HOME)/.local
+```
+
+Commands intended for use in `.procmailrc` are installed in `bin/`, while commands for cronjobs are installed in `share/`.
+
+
+# Common configuration
+
+Several commands require configuration:
+
+- `push-imap`
+
+- `purge-imap`
+
+- `remove-external-sender`
+
+By default, they read YAML configuration from `~/.config/posthack/config.yml`.
+This is overridden by the value of the environment variable `POSTHACK_CONFIG`, which in turn is overridden by the `-f` switch of these commands.
+
+
+## IMAP accounts
+
+*Caution!
+Misconfiguration could result in lost emails!*
+
+`push-imap` and `purge-imap` require access to one or more IMAP accounts.
+The main configuration needs a field `accounts` containing account details:
+
+```
+secrets: ~/.config/posthack/secrets.yml
+default-account: default
+accounts:
+  - name: default
+    hostname: imap.example.com
+    username: fred
+```
+
+Each entry requires a `name` field which identifies the account within Posthack commands.
+The account that a given invocation of a command uses is set by the `-a` switch, by the `POSTHACK_ACCOUNT` environment variable, by the `default-account` field, or by the literal `default`, in that order of precedence.
+
+Each entry also requires `hostname` and `username` fields.
+A `port` field is optional, and defaults to 993.
+
+Passwords are stored in the file specified by `secrets` (or `~/.config/posthack/secrets.yml` by default), indexed by the local account name.
+For example:
+
+```
+default: yeahright
+```
+
+Make sure the file is readable only by you:
+
+```
+chmod 600 ~/.config/posthack/secrets.yml
+```
+
+
+# Mail filtering
+
 ## Dealing with encoded subjects
 
 The subject of an email is held in a header field `Subject`, and so it's usually restricted to `US-ASCII` encoding.
@@ -60,7 +134,7 @@ Use `strip-label` to remove matching strings from the subject, along with any tr
 
 At some point, I had set up one dysfunctional email account to forward to another, but the forwarding was broken such that the `Message-Id` header field was destroyed and replaced by something less than useless.
 This broke threading, as all the `In-Reply-To` and `References` fields referred to phantom ids.
-I found I could avoid this by using the option to forward as an attachment, which maintained the integrity of the message.
+I found I could avoid this by using the forward-as-attachment option, which maintained the integrity of the message.
 Of course, it then needed unpacking at the other end, for which I used the following:
 
 ```
@@ -82,9 +156,13 @@ Arguments allow you to walk a multipart message hierarchy:
 - `-n *name*` &ndash; Skip parts without a content disposition name `name`.
 
 - `--` &ndash; Select the first part matching the above criteria, and make it the current message.
-  `-s`, `-t`, `-d` and `-n` are then reset, so new criteria can be specified for selecting within the new current message.
+
+`-s`, `-t`, `-d` and `-n` can be combined as a logical AND.
+`-s 2 -t message/rfc822 -d attachment` selects the third part that is both an RFC822 message and an attachment.
+These are reset with each `--`, so new criteria can be specified for selecting within the new current message.
 
 If no arguments are supplied, `-s 1` is assumed (for backward compatibility).
+
 
 ## Restoring 'safe' links
 
@@ -114,7 +192,7 @@ Use a combination of rules to deal with this:
   EXTERNAL_MAIL=| formail -cXX-External-Mail
 
   :0 fw
-  | remove-external-sender -f $HOME/.config/posthack/ext1.yml
+  | remove-external-sender
 
   :0 fhw
   | strip-label '[External Sender]' '[External]'
@@ -124,18 +202,21 @@ Use a combination of rules to deal with this:
 This block only applies to messages marked unambiguously with the special header field.
 It then copies that field to an environment variable;
 later commands will have access to it outside this block.
-Then `remove-external-sender` demangles the message body by looking for text indicated by the YAML file.
+Then `remove-external-sender` demangles the message body by looking for text indicated by configuration.
 Finally, various subject tags are stripped.
 
-The configuration file `$HOME/.config/posthack/ext1.yml` can contain the likes of the following:
+The configuration file must contain a `blocks` entry, which itself is a `$HOME/.config/posthack/ext1.yml` can contain the likes of the following:
 
 ```
 blocks:
-  - 'This email did not originate within your institution.'
-  - '<p>This email did not originate within your institution.</p>'
+  home:
+    - ~/.config/posthack/blocks/form*.txt
 ```
 
-Each element of `blocks` is split into lines, and matched against exact lines in the message.
+By specifying `-a home` (or by having `default-account: home` in the configuration), files matching the listed names are read and matched against lines in the input message body.
+Lines from the message are decoded according to `Content-Transfer-Encoding` and `Content-Type` before matching lines in the listed files.
+Remaining lines are re-encoded and concatenated to form the resulting message.
+In a multipart message, each part is processed separately.
 
 
 ## IMAP delivery
@@ -145,38 +226,13 @@ You might prefer `procmail`, but have no way to run it on the server.
 You could fetch new mail off that server, and process it on a dedicated server at home, or on a VPS, but `procmail` won't be able to deliver back to specific folders on the server, as it can only natively deliver to local mbox or maildirs folders.
 `push-imap` can be used in a `procmail` rule to deliver the message to a specific folder on an IMAP server.
 
-*Caution!  Misconfiguration could result in lost emails!*
-
-Create a file (say, `~/.config/posthack/config.yml`) to hold account details:
-
-```
-secrets: ~/.config/posthack/secrets.yml
-default-account: default
-accounts:
-  - name: default
-    hostname: imap.example.com
-    username: fred
-```
-
-Also create a secure file `~/.config/posthack/secrets.yml` to hold passwords indexed by the value of the `name` field:
+`push-imap` uses `-f` and `-a` to select the configuration file and IMAP account.
+You can also set these by environment variables in `~/.procmailrc`:
 
 ```
-default: yeahright
-```
-
-Make sure the file is readable only by you:
-
-```
-chmod 600 ~/.config/posthack/secrets.yml
-```
-
-`push-imap` reads from `~/.config/posthack/config.yml` by default, but this is overridden by setting the environment variable `PUSHIMAP_CONFIG`, which is in turn overridden by the switch `-f somefile.yml`.
-It then selects the account whose name is `default` by default, similarly overridden in turn by the field `default-account`, the environment variable `PUSHIMAP_ACCOUNT`, and the switch `-a otheraccount`.
-Set `PUSHIMAP_ACCOUNT` and/or `PUSHIMAP_CONFIG` at the start of `.procmailrc`, if you don't want to use the defaults:
-
-```
-PUSHIMAP_CONFIG = $HOME/.pushimap.yml
-PUSHIMAP_ACCOUNT = bt
+## In ~/.procmailrc
+POSTHACK_CONFIG = $HOME/.pushimap.yml
+POSTHACK_ACCOUNT = bt
 ```
 
 Some servers use dots as separators for nested folders, and some use slashes.
@@ -197,15 +253,15 @@ For example, this one delivers Twitter notifications to `Alerts/News`:
 You can also use `-F` to mark the message as flagged or starred.
 
 The `W` flag on the `procmail` rule ensures that the message continues to be processed if the command fails.
-You should have a catch-all at the end to drop messages by default in your inbox, and set `DEFAULT` so that the email is preserved locally:
+You should have a catch-all at the end to drop messages by default in your inbox, and set `DEFAULT` so that the email is preserved locally if anything goes wrong:
 
 ```
 ## At the start
 
-## Append to an mbox file.
+## Append to a local mbox file.
 DEFAULT = /var/mail/fred
 
-## Or drop in a maildirs directory structure.
+## Or drop into a local maildirs directory structure.
 DEFAULT = /var/mail/fred.dirs/
 
 # .
@@ -216,6 +272,7 @@ DEFAULT = /var/mail/fred.dirs/
 :0 W
 | push-imap -d "INBOX"
 ```
+
 
 ### Tagging external messages
 
@@ -234,6 +291,8 @@ accounts:
 With this configuration, if the environment variable `EXTERNAL_MAIL` is non-empty, the tag `External` will be added to the message as it is delivered.
 (Recall that `EXTERNAL_MAIL` is set by one of the `.procmailrc` configuration examples earlier.)
 Your email user agent should be able to highlight such messages.
+
+# Background processing
 
 ## IMAP purging
 
@@ -270,9 +329,9 @@ Quote them correctly for YAML, if necessary.
 When ready, set up an infrequent cronjob to purge the old messages:
 
 ```
-PUSHIMAP_CONFIG=/home/fred/.config/posthack/config.yml
+POSTHACK_CONFIG=/home/fred/.config/posthack/config.yml
 
-45 4 * * 3 purge-imap > "$HOME/.local/var/log/purge-bt.log" 2>&1
+45 4 * * 3 /usr/local/share/posthack/purge-imap > "$HOME/.local/var/log/purge-default.log" 2>&1
 ```
 
 
@@ -297,7 +356,7 @@ If your external IP address changes, some messages might go through to someone e
 If they're not listening on port 25, the message will probably be queued until the update is complete, but you're listening on 25, so why shouldn't they?
 
 If you have a box at a fixed address you can SSH into, and which doesn't already have port 25 open, you could SSH-tunnel to it, so that all connections on that box transparently reach your home box.
-You're calling out, so dynamic DNS is not relevant.
+You're calling out, so port forwarding and dynamic DNS are not relevant.
 Use `autossh` to help keep the connection open.
 If it's closed temporarily, the caller will likely queue the message until the connection is back up.
 However, if you have that box, and the necessary permissions, why not just run `procmail` there?
@@ -311,6 +370,7 @@ If you're polling, you can use POP or IMAP.
 
 Alternatively, `fetchmail` can remain permanently connected to an IMAP server using the `idle` directive.
 It will fetch email as soon as it arrives.
+This only works with IMAP, and only one account can be watched.
 However, I have noticed that it can become insensitive under unknown conditions.
 (Perhaps a problem with the server?)
 This seems to be remedied with an occasional `SIGHUP`:
@@ -319,8 +379,6 @@ This seems to be remedied with an occasional `SIGHUP`:
 ## At 01:20, 07:20, 13:20, 19:20, wake an idle fetchmail up.
 20 1,7,13,19 * * * if [ -r "$HOME/.fetchmail.pid" ] ; then /bin/kill -HUP "$(/bin/cat "$HOME/.fetchmail.pid")" ; fi
 ```
-
-This only works with IMAP, and only one account can be watched.
 
 If you fetch from the remote server, and have `procmail` depositing emails back into it, avoid creating a loop whereby your emails are dropped back in `INBOX` by default, and `fetchmail` pulls from there!
 Instead, use the remote server's native filtering facility to move all emails arriving by SMTP into (say) `INBOX/Incoming`, and have `fetchmail` pull only from there.
