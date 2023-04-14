@@ -192,7 +192,7 @@ Use a combination of rules to deal with this:
   EXTERNAL_MAIL=| formail -cXX-External-Mail
 
   :0 fw
-  | remove-external-sender
+  | remove-external-sender -a home
 
   :0 fhw
   | strip-label '[External Sender]' '[External]'
