@@ -35,5 +35,6 @@ from email.header import decode_header
 
 dh = decode_header(sys.stdin.read())
 default_charset = 'US-ASCII'
-res = ''.join([ str(t[0], t[1] or default_charset) for t in dh ])
+res = ''.join([ t[0] if isinstance(t[0], str)
+                else str(t[0], t[1] or default_charset) for t in dh ])
 print(res)
