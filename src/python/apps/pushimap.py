@@ -102,7 +102,8 @@ if __name__ == '__main__':
             created = False
             while True:
                 idate = imaplib.Time2Internaldate(time.time())
-                typ, erk = conn.append(mb_name, ' '.join(flags), idate,
+                typ, erk = conn.append('"' + mb_name + '"',
+                                       ' '.join(flags), idate,
                                        msg.as_bytes(unixfrom=True))
                 if typ != 'NO':
                     sys.exit()
