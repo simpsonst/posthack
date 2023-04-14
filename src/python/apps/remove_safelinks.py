@@ -104,11 +104,9 @@ if __name__ == '__main__':
             cs = part.get_content_charset('us-ascii')
             tenc = part.get('Content-Transfer-Encoding')
             text = part.get_payload(decode=True)
-            # if cs is not None:
-            #     text = text.decode(cs)
+            text = text.decode(cs)
             text = decode_text(text)
-            # if cs is not None:
-            #     text = text.encode(cs)
+            text = text.encode(cs)
             if tenc == 'base64':
                 text = base64.b64encode(text)
             elif tenc == 'quoted-printable':
