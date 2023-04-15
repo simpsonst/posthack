@@ -83,7 +83,7 @@ def decode_text(text):
             qdict = urllib.parse.parse_qs(m.group(8))
             if 'url' in qdict:
                 alt = qdict['url'][0]
-                res += alt
+                res += urllib.parse.quote(alt, safe='/:&?=;', encoding='utf-8')
                 # print 'Replacement: ' + alt
             else:
                 res += m.group()
