@@ -80,7 +80,7 @@ def decode_text(text):
         hostname = m.group(5)
         if qs is not None and \
            hostname.lower().endswith('.safelinks.protection.outlook.com'):
-            qdict = urllib.parse_qs(m.group(8))
+            qdict = urllib.parse.parse_qs(m.group(8))
             if 'url' in qdict:
                 alt = qdict['url'][0]
                 res += alt
