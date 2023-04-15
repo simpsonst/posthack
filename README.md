@@ -38,6 +38,12 @@ PREFIX=$(HOME)/.local
 Commands intended for use in `.procmailrc` are installed in `bin/`, while commands for cronjobs are installed in `share/`.
 
 
+## Dependencies
+
+```
+sudo apt-get install python3-bs4
+```
+
 # Common configuration
 
 Several commands require configuration:
