@@ -34,8 +34,6 @@ import imaplib
 import time
 import os
 import sys
-import email.message
-import email
 import getopt
 from pprint import pprint
 
@@ -93,8 +91,8 @@ if __name__ == '__main__':
                 continue
 
             ## Read in the message.
-            with open(fn, "r") as fp:
-                msg = email.message_from_file(fp)
+            with open(fn, "rb") as fp:
+                msg = fp.read()
                 pass
 
             ## Attempt to add the file's contents as a message, or
@@ -103,8 +101,7 @@ if __name__ == '__main__':
             while True:
                 idate = imaplib.Time2Internaldate(time.time())
                 typ, erk = conn.append('"' + mb_name + '"',
-                                       ' '.join(flags), idate,
-                                       msg.as_bytes(unixfrom=True))
+                                       ' '.join(flags), idate, msg)
                 if typ != 'NO':
                     sys.exit()
                     pass
