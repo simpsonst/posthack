@@ -38,7 +38,7 @@ import re
 from getopt import getopt
 
 if __name__ == '__main__':
-    msg = email.message_from_file(sys.stdin)
+    msg = email.message_from_binary_file(sys.stdin.buffer)
     ifmt = re.compile(r'^[0-9]+$')
     mfmt = re.compile(r'^\w+/[-.\w]+(?:\+[-.\w]+)?$')
     path = 0

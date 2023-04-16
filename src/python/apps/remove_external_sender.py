@@ -80,7 +80,7 @@ if __name__ == '__main__':
     crlf = re.compile(r'(\r?\n)')
 
     ## Process the message.
-    msg = email.message_from_file(sys.stdin)
+    msg = email.message_from_binary_file(sys.stdin.buffer)
     for part in msg.walk():
         ## TODO: Handle text/calendar too.
         if part.get_content_type() == 'text/plain' or \

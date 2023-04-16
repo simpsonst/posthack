@@ -97,7 +97,7 @@ def decode_text(text):
     return res
 
 if __name__ == '__main__':
-    msg = email.message_from_file(sys.stdin)
+    msg = email.message_from_binary_file(sys.stdin.buffer)
     for part in msg.walk():
         #print [method_name for method_name in dir(part) if callable(getattr(part, method_name))]
         if part.get_content_type() == 'text/plain':

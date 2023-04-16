@@ -36,7 +36,7 @@ import re
 from email.header import decode_header
 
 if __name__ == '__main__':
-    msg = email.message_from_file(sys.stdin)
+    msg = email.message_from_binary_file(sys.stdin.buffer)
     default_charset = 'ASCII'
     oldsubj = ''.join([ txt.decode(enc or default_charset)
                         if isinstance(txt, bytes) else txt
