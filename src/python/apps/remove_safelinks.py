@@ -117,7 +117,6 @@ if __name__ == '__main__':
             cs = part.get_content_charset('us-ascii')
             tenc = part.get('Content-Transfer-Encoding')
             text = part.get_payload(decode=True)
-            text = text.decode(cs)
             soup = BeautifulSoup(text, 'html.parser', from_encoding=cs)
             for link in soup.find_all('a'):
                 val = link.get('href')
@@ -129,7 +128,6 @@ if __name__ == '__main__':
                 link['href'] = val
                 continue
             text = soup.encode(cs)
-            text = text.encode(cs)
             if tenc == 'base64':
                 text = base64.b64encode(text)
             elif tenc == 'quoted-printable':
