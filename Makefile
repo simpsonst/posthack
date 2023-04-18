@@ -1,6 +1,8 @@
 all::
 
 FIND=find
+SED=sed
+XARGS=xargs
 PREFIX=/usr/local
 
 ## Provide a version of $(abspath) that can cope with spaces in the
@@ -36,6 +38,16 @@ all:: python-zips
 install:: install-python-zips
 install:: install-scripts
 install:: install-hidden-scripts
+
+
+# Set this to the comma-separated list of years that should appear in
+# the licence.  Do not use characters other than [0-9,] - no spaces.
+YEARS=2023
+
+update-licence:
+	$(FIND) . -name ".git" -prune -or -type f -print0 | $(XARGS) -0 \
+	$(SED) -i 's/Copyright (c) [0-9,-]\+ Lancaster University/Copyright (c) $(YEARS), Lancaster University/g'
+
 
 tidy::
 	$(FIND) . -name "*~" -delete
