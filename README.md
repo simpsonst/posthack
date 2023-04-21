@@ -12,7 +12,7 @@ These Python scripts are intended for use mostly in `procmail` rules, and provid
 
 - Strip 'external' warnings.
 
-- Deliver to IMAP folders, starred and/or marked as read.  (TODO: And with custom tags!)
+- Deliver to IMAP folders, starred and/or marked as read, and with custom tags.
 
 - Purge old messages from IMAP servers.
 
@@ -51,6 +51,8 @@ Several commands require configuration:
 - `push-imap`
 
 - `purge-imap`
+
+- `list-imap`
 
 - `remove-external-sender`
 
@@ -167,7 +169,7 @@ Arguments allow you to walk a multipart message hierarchy:
 `-s 2 -t message/rfc822 -d attachment` selects the third part that is both an RFC822 message and an attachment.
 These are reset with each `--`, so new criteria can be specified for selecting within the new current message.
 
-If no arguments are supplied, `-s 1` is assumed (for backward compatibility).
+If no arguments are supplied, `-s 1` is assumed.
 
 
 ## Restoring 'safe' links
@@ -211,7 +213,7 @@ later commands will have access to it outside this block.
 Then `remove-external-sender` demangles the message body by looking for text indicated by configuration.
 Finally, various subject tags are stripped.
 
-The configuration file must contain a `blocks` entry, which itself is a `$HOME/.config/posthack/ext1.yml` can contain the likes of the following:
+The configuration file must contain a `blocks` entry, which itself can contain the likes of the following:
 
 ```
 blocks:
@@ -227,19 +229,12 @@ In a multipart message, each part is processed separately.
 
 ## IMAP delivery
 
-If you keep your emails on a remote IMAP server, the provider might provide some filtering rules.
+If you keep your emails on a remote IMAP server, the provider might provide some limited filtering rules.
 You might prefer `procmail`, but have no way to run it on the server.
 You could fetch new mail off that server, and process it on a dedicated server at home, or on a VPS, but `procmail` won't be able to deliver back to specific folders on the server, as it can only natively deliver to local mbox or maildirs folders.
 `push-imap` can be used in a `procmail` rule to deliver the message to a specific folder on an IMAP server.
 
-`push-imap` uses `-f` and `-a` to select the configuration file and IMAP account.
-You can also set these by environment variables in `~/.procmailrc`:
-
-```
-## In ~/.procmailrc
-POSTHACK_CONFIG = $HOME/.pushimap.yml
-POSTHACK_ACCOUNT = bt
-```
+`push-imap` recognizes the switches `-f` and `-a`, and the environment variables `POSTHACK_CONFIG` and `POSTHACK_ACCOUNT`, to select the configuration file and IMAP account.
 
 Some servers use dots as separators for nested folders, and some use slashes.
 You can first use `list-imap` to list folders in the account, showing what is used in each case.
@@ -307,7 +302,7 @@ For example, it could retain only messages less than 90 days old in `Alerts/News
 
 That's great, but it depends on having the user agent running, and if you use more than one (e.g., one at home, one at work), you either have to maintain two sets of policies, or keep one running at the place you're not.
 
-`purge-imap` can be used to apply retention policies to a remote IMAP server.
+`purge-imap` can be used headless to apply retention policies to a remote IMAP server.
 
 *Caution!  Misconfiguration could result in losing the wrong emails!*
 
@@ -353,8 +348,9 @@ Another is to fetch it via POP or IMAP.
 
 ### Forwarding via SMTP
 
-Your server will need to keep port 25 open to receive emails.
-I've used `postfix` for this, but you must configure it correctly to prevent it being used as an open relay.
+Your server will need to keep port 25 open to receive emails;
+I've used `postfix` for this.
+Whatever you use, make sure you configure it correctly to prevent it being used as an open relay.
 Only accept emails in envelopes addressing your specific server, and drop everything else.
 
 A home server is problematic, as it will probably require port forwarding, and dynamic DNS.
