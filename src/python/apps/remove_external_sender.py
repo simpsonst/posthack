@@ -32,8 +32,8 @@
 
 import os
 import sys
-import email.message
 import email
+import email.generator
 import re
 import base64
 import quopri
@@ -116,5 +116,7 @@ if __name__ == '__main__':
             part.set_payload(text)
             pass
         continue
-    sys.stdout.buffer.write(msg.as_bytes(unixfrom=True))
+    bgen = email.generator.BytesGenerator(sys.stdout.buffer,
+                                          maxheaderlen=0)
+    bgen.flatten(msg, linesep='\r\n')
     pass

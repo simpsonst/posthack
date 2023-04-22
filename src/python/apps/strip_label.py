@@ -32,6 +32,7 @@
 
 import sys
 import email
+import email.generator
 import re
 from email.header import decode_header
 
@@ -59,5 +60,7 @@ if __name__ == '__main__':
 
     del msg['Subject']
     msg['Subject'] = subj
-    sys.stdout.buffer.write(msg.as_bytes(unixfrom=True))
+    bgen = email.generator.BytesGenerator(sys.stdout.buffer,
+                                          maxheaderlen=0)
+    bgen.flatten(msg, linesep='\r\n')
     pass
