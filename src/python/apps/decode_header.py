@@ -34,43 +34,38 @@ import re
 import sys
 from email.header import decode_header
 nvpat = re.compile(r"(?:([^:]+):)?(.*)", re.DOTALL | re.MULTILINE)
-crlffold = re.compile(r'\s+', re.DOTALL | re.MULTILINE)
+crlffold = re.compile(r'\s*\r\s*', re.DOTALL | re.MULTILINE)
 default_charset = 'US-ASCII'
 
 raw = sys.stdin.buffer.read()
-# print(repr(raw))
 mt = nvpat.match(str(raw, 'US-ASCII'))
 name = mt.group(1)
 if name is not None:
     name = name.strip()
     pass
-value = crlffold.sub(r' ', mt.group(2)).strip()
-# print(repr(value))
+value = crlffold.sub(' ', mt.group(2)).strip()
 
 dh = decode_header(value)
-# print(repr(dh))
 res = '' if name is None else (name + ": ")
 gap = False
 first = True
 for data, cs in dh:
     if isinstance(data, str):
-        # if not first:
-        #     res += ' '
-        #     pass
-        res += data
-        #.strip()
+        if not first:
+            res += ' '
+            pass
+        res += data.strip()
         gap = True
     elif cs is None:
-        # if not first:
-        #     res += ' '
-        #     pass
-        res += str(data, default_charset)
-        #.strip()
+        if not first:
+            res += ' '
+            pass
+        res += str(data, default_charset).strip()
         gap = True
     else:
-        # if gap and not first:
-        #     res += ' '
-        #     pass
+        if gap and not first:
+            res += ' '
+            pass
         res += str(data, cs)
         gap = False
         pass
