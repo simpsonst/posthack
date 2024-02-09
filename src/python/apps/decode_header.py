@@ -30,11 +30,50 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 ## OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import re
 import sys
 from email.header import decode_header
-
-dh = decode_header(sys.stdin.read())
+nvpat = re.compile(r"(?:([^:]+):)?(.*)", re.DOTALL | re.MULTILINE)
+crlffold = re.compile(r'\s+', re.DOTALL | re.MULTILINE)
 default_charset = 'US-ASCII'
-res = ''.join([ t[0] if isinstance(t[0], str)
-                else str(t[0], t[1] or default_charset) for t in dh ])
+
+raw = sys.stdin.buffer.read()
+# print(repr(raw))
+mt = nvpat.match(str(raw, 'US-ASCII'))
+name = mt.group(1)
+if name is not None:
+    name = name.strip()
+    pass
+value = crlffold.sub(r' ', mt.group(2)).strip()
+# print(repr(value))
+
+dh = decode_header(value)
+# print(repr(dh))
+res = '' if name is None else (name + ": ")
+gap = False
+first = True
+for data, cs in dh:
+    if isinstance(data, str):
+        # if not first:
+        #     res += ' '
+        #     pass
+        res += data
+        #.strip()
+        gap = True
+    elif cs is None:
+        # if not first:
+        #     res += ' '
+        #     pass
+        res += str(data, default_charset)
+        #.strip()
+        gap = True
+    else:
+        # if gap and not first:
+        #     res += ' '
+        #     pass
+        res += str(data, cs)
+        gap = False
+        pass
+    first = False
+    continue
 print(res)
