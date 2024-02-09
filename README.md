@@ -105,15 +105,8 @@ Other charsets are possible by encoding them with the likes of `=?utf-8?q?caf=C3
 Use `decode-header` to convert an encoded subject into UTF-8:
 
 ```
-:0 h
-* ^Subject:.*=\?
-SUBJECT=| formail -cXSubject: | decode-header
-
-:0 hE
-SUBJECT=| formail -cXSubject:
+SUBJECT=`formail -cXSubject: | decode-header`
 ```
-
-(The second rule acts as an undecoded back-up, should the first fail, or not contain `=?`.)
 
 You can then use this condition to test against the decoded subject:
 
