@@ -55,9 +55,9 @@ if __name__ == '__main__':
         elif opt == '-d':
             mb_name = val
         elif opt == '-s':
-            flags.append('\Seen')
+            flags.append('\\Seen')
         elif opt == '-F':
-            flags.append('\Flagged')
+            flags.append('\\Flagged')
             pass
         continue
     config = PosthackConfiguration(cfg_name, acc_name)

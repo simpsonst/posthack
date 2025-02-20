@@ -67,7 +67,7 @@ if __name__ == '__main__':
             fstxt, dlim, mbox = \
                 imap_list_fmt.match(item.decode('US-ASCII')).groups()
             fs = fstxt.split()
-            if '\Trash' in fs:
+            if '\\Trash' in fs:
                 trash = mbox.strip('"')
                 break
             pass
@@ -137,7 +137,7 @@ if __name__ == '__main__':
                         sys.stderr.write('    Copy error: %s\n' % rsp)
                         continue
                     # pprint(rsp)
-                    rsp = conn.store(mnums, '+FLAGS', '\Deleted')
+                    rsp = conn.store(mnums, '+FLAGS', '\\Deleted')
                     # pprint(rsp)
                     rsp = conn.expunge()
                     # pprint(rsp)
@@ -199,7 +199,7 @@ if __name__ == '__main__':
                         sys.stderr.write('    Copy error: %s\n' % rsp)
                         continue
                     # pprint(rsp)
-                    rsp = conn.store(mnums, '+FLAGS', '\Deleted')
+                    rsp = conn.store(mnums, '+FLAGS', '\\Deleted')
                     # pprint(rsp)
                     rsp = conn.expunge()
                     # pprint(rsp)
